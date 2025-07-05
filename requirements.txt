@@ -1,0 +1,6 @@
+atlassian_api_py @ git+https://github.com/insomnial/atlassian-api-py.git@f845b88228c8a833ee21e865926a7a567d4ed1e7
+certifi==2025.6.15
+charset-normalizer==3.4.2
+idna==3.10
+requests==2.32.4
+urllib3==2.5.0
