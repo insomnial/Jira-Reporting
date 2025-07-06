@@ -2,7 +2,7 @@
 Python project using an separate API repository to search for Jira/JSM issues and generate reports on them.
 
 ## Populate requirements which you'll need to install
-(in the venv) pip freeze > requirements.txt
+(in the venv) `pip freeze > requirements.txt`
 
 ## Logging in stdout
 1. `* Local db`
