@@ -5,12 +5,12 @@ Python project using an separate API repository to search for Jira/JSM issues an
 (in the venv) pip freeze > requirements.txt
 
 ## Logging in stdout
-- `* Local db`
- - Information steps
-- `> Check for db folder`
- - Action
-- ` ! Db folder does not exist`
- - Action results
-- `# Get issues from filter sql property`
- - Process step
+1. `* Local db`
+   - Information steps
+2. `> Check for db folder`
+   - Action
+3. `! Db folder does not exist`
+   - Action results
+4. `# Get issues from filter sql property`
+   - Process step
  
