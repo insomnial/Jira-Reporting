@@ -3,3 +3,14 @@ Python project using an separate API repository to search for Jira/JSM issues an
 
 ## Populate requirements which you'll need to install
 (in the venv) pip freeze > requirements.txt
+
+## Logging in stdout
+- `* Local db`
+ - Information steps
+- `> Check for db folder`
+ - Action
+- ` ! Db folder does not exist`
+ - Action results
+- `# Get issues from filter sql property`
+ - Process step
+ 

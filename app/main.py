@@ -1,9 +1,17 @@
 import sys, os, base64
 from atlassian_api_py import controllerapi
+import controllerdb
+from datetime import datetime
 
+# constant strings
 USAGE = "Start GUI by calling main.py"
+DEFAULT_DB = "jirareporting"
 
-def main(args = None, opts = None) -> None:
+# constant args
+CMD_VOLATILE = '--volatile'
+
+
+def main(cmds = None, args = None, opts = None) -> None:
     # if not args:
     #     raise SystemExit(USAGE)
 
@@ -17,9 +25,22 @@ def main(args = None, opts = None) -> None:
     rooturl = os.getenv('ATLASSIAN_ROOTURL')
     token = base64.b64encode(f'{email}:{key}'.encode()).decode()
     
+    # get API controller
     controller = controllerapi.ApiController(aToken=token, aRootUrl=rooturl, aWorkspace=workspaceid)
 
-    print("Search using filter sql property")
+    # get DB
+    now = datetime.now() # current date and time
+    date_time = now.strftime("%m%d%Y%H%M%S")
+    if CMD_VOLATILE in cmds:
+        print(f"* Memory db")
+        dataDb = controllerdb.init()
+    else:
+        print(f"* Local db")
+
+        dataDb = controllerdb.init(date_time + '.db')
+
+    # move this to its own method?
+    print("# Get issues from filter sql property")
     getFilter = controller.get_filter(10209)
     filterSql = getFilter['jql']
     isLast = False
@@ -39,9 +60,15 @@ def main(args = None, opts = None) -> None:
 
     print("Seach for specific issues")
     for key in keys:
+        print(f"# {key}")
+        print(f"  - Get issue details")
         # get issue details
         issueDetailsJson = controller.get_issue(issueIdOrKey=key, fieldsByKeys=True)
+        print(f"  - Save issue details")
+        # TODO Get issues details: assignee, status, created date, updated date
+
         # get issue changelogs
+        print(f"  - Get issue changelogs")
         isLast = False
         startAt = 0
         changelogs = []
@@ -51,8 +78,7 @@ def main(args = None, opts = None) -> None:
             startAt = startAt + changelogJson['total']
             changelogs = changelogs + changelogJson['values']
             pass # while
-
-        # TODO Get issues details: assignee, status, created date, updated date
+        print(f"  - Save changelogs")
         # TODO Parse changelogs and track: assignee changes, status changes
 
         pass # for
@@ -61,6 +87,8 @@ def main(args = None, opts = None) -> None:
 
 
 if __name__ == "__main__":
-    opts = [opt for opt in sys.argv[1:] if opt.startswith("-")]
-    args = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
-    main(args, opts)
+    cmds = [cmd for cmd in sys.argv[1:] if cmd.startswith("--")]
+    opts = [opt for opt in sys.argv[1:] if (opt.startswith("-") and not opt.startswith("--"))]
+    args = [arg for arg in sys.argv[1:] if (not arg.startswith("-") and not arg.startswith("--"))]
+
+    main(cmds, args, opts)
