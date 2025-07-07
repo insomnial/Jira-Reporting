@@ -4,7 +4,8 @@ Python project using an separate API repository to search for Jira/JSM issues an
 ## Populate requirements which you'll need to install
 (in the venv) `pip freeze > requirements.txt`
 
-## Add export and unset variables in  or  script
+## Add export and unset variables in activate script
+Highly recommended to use venv.
 
 ### `.venv/bin/activate`
 ```
