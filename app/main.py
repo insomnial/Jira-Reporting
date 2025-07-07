@@ -2,7 +2,9 @@ import sys, os, base64
 from datetime import datetime
 from atlassian_api_py import controllerapi
 import controllerdb
+import controllerwebhook
 import controllerworkitems
+from workitem import WorkItem
 
 
 # constant strings
@@ -17,41 +19,52 @@ USAGE = "Start GUI by calling main.py\n" \
 CMD_VOLATILE = '--volatile'
 CMD_NOGUI = '--nogui'
 
+# globals
+ApiCon = None
+DbCon = None
+Keys = None
+
 
 # Gets the work items associated with the specified filter
-# aConnApi : controllerapi object
-# aFilter : filter ID from CLI
-# return : populated list of key IDs
-def _getWorkItemsUsingFilter(aConnApi : controllerapi, aFilter : str) -> list:
+def _getWorkItemsUsingFilter(aFilter : str) -> None:
+    global ApiCon
+    global Keys
+
     print("# Get work items from filter's sql property")
-    getFilter = aConnApi.get_filter(aFilter)
+    getFilter = ApiCon.get_filter(aFilter)
     filterSql = getFilter['jql']
     isLast = False
     nextPageToken = ''
-    keys = []
+    Keys = []
     while not isLast:
-        search = aConnApi.search_jql(aJql=filterSql, nextPageToken=nextPageToken)
+        search = ApiCon.search_jql(aJql=filterSql, nextPageToken=nextPageToken, maxResults=1000)
         if 'isLast' in search: isLast = search['isLast']
         if 'nextPageToken' in search: nextPageToken = search['nextPageToken']
         issues = search['issues']
         for item in issues:
             key = item['key']
-            keys.append(key)
-        print(len(keys))
-    return keys
+            Keys.append(key)
+        print(len(Keys))
 
 
 # Gets work item details from list of key IDs
-# aConnApi : controllerapi object
-# aKeys : list of key IDs
-def _getWorkItemDetails(aConnApi : controllerapi, aKeys : list) -> None:
+def _getWorkItemDetailsForKeys() -> None:
+    global ApiCon
+    global Keys
+
     print("Search for specific work items")
-    for key in aKeys:
+    for key in Keys:
         print(f"# {key}")
         print(f"  - Get issue details")
         # get issue details
-        issueDetailsJson = aConnApi.get_issue(issueIdOrKey=key, fieldsByKeys=True)
-        print(f"  - Save issue details")
+        issueDetailsJson = ApiCon.get_issue(issueIdOrKey=key, fieldsByKeys=True)
+
+        # filter out empty custom_field
+        popFields = {k:v for k,v in issueDetailsJson['fields'].items() if v}
+        popFields['atlassian_keyid'] = key
+
+        pass
+
         # TODO Get issues details: assignee, status, created date, updated date
 
         # get issue changelogs
@@ -60,18 +73,24 @@ def _getWorkItemDetails(aConnApi : controllerapi, aKeys : list) -> None:
         startAt = 0
         changelogs = []
         while not isLast:
-            changelogJson = aConnApi.get_changelogs(key)
+            changelogJson = ApiCon.get_changelogs(key)
             isLast = changelogJson['isLast']
             startAt = startAt + changelogJson['total']
             changelogs = changelogs + changelogJson['values']
             pass # while
-        print(f"  - Save changelogs")
+
+        print(f"  - Store work item in {DbCon}")
+        workItem = WorkItem(DbCon).saveWorkItem(popFields, issueDetailsJson['names'], changelogs)
+
         # TODO Parse changelogs and track: assignee changes, status changes
 
         pass # for
 
 
 def main(cmds = None, args = None, opts = None) -> None:
+    global ApiCon
+    global DbCon
+
     if not args:
         raise SystemExit(USAGE)
     
@@ -95,25 +114,25 @@ def main(cmds = None, args = None, opts = None) -> None:
     token = base64.b64encode(f'{email}:{key}'.encode()).decode()
     
     # get API controller
-    conapi = controllerapi.ApiController(aToken=token, aRootUrl=rooturl)
+    ApiCon = controllerapi.ApiController(aToken=token, aRootUrl=rooturl)
 
     # get DB
     now = datetime.now() # current date and time
     date_time = now.strftime("%m%d%Y%H%M%S")
     if CMD_VOLATILE in cmds:
         print(f"* Memory db")
-        dataDb = controllerdb.init()
+        DbCon = controllerdb.init()
     else:
         print(f"* Local db")
-        dataDb = controllerdb.init(date_time + '.db')
+        DbCon = controllerdb.init(date_time + '.db')
 
     # get list of work items from filter
-    keys = _getWorkItemsUsingFilter(aConnApi=conapi, aFilter=reqFilter)
+    keys = _getWorkItemsUsingFilter(aFilter=reqFilter)
     print()
 
     # details from each work item
-    _getWorkItemDetails(aConnApi=conapi, aKeys=keys)
-    
+    _getWorkItemDetailsForKeys()
+
     pass # main
 
 
