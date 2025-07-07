@@ -6,17 +6,26 @@ from datetime import datetime
 # constant strings
 USAGE = "Start GUI by calling main.py\n" \
         "  OPT\n" \
-        "    --volatile for memory db, defaults to local db\n" \
+        "    [--volatile] for memory db, defaults to local db\n" \
+        "    [--nogui] to run in terminal\n" \
         "  REQ\n" \
-        "    -filter <filter_id>\n"
+        "    [-filter <filter_id>] must be readable by user credentials\n"
 
 # constant args
 CMD_VOLATILE = '--volatile'
+CMD_NOGUI = '--nogui'
 
 
 def main(cmds = None, args = None, opts = None) -> None:
     if not args:
         raise SystemExit(USAGE)
+    
+    if CMD_NOGUI in cmds:
+        print(f"* Running in terminal")
+    else:
+        print(f"* Starting gui")
+        print(f"NOT CURRENTLY SUPPORTED")
+        raise SystemExit(0)
 
     if '-filter' not in opts:
         raise SystemExit(USAGE)
@@ -31,7 +40,7 @@ def main(cmds = None, args = None, opts = None) -> None:
     token = base64.b64encode(f'{email}:{key}'.encode()).decode()
     
     # get API controller
-    controller = controllerapi.ApiController(aToken=token, aRootUrl=rooturl, aWorkspace=workspaceid)
+    controller = controllerapi.ApiController(aToken=token, aRootUrl=rooturl)
 
     # get DB
     now = datetime.now() # current date and time
@@ -95,4 +104,7 @@ if __name__ == "__main__":
     opts = [opt for opt in sys.argv[1:] if (opt.startswith("-") and not opt.startswith("--"))]
     args = [arg for arg in sys.argv[1:] if (not arg.startswith("-") and not arg.startswith("--"))]
 
-    main(cmds, args, opts)
+    try:
+        main(cmds, args, opts)
+    except KeyboardInterrupt as e:
+        print(f"\n\n####\nClosing script.")
