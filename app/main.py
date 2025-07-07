@@ -1,7 +1,9 @@
 import sys, os, base64
+from datetime import datetime
 from atlassian_api_py import controllerapi
 import controllerdb
-from datetime import datetime
+import controllerworkitems
+
 
 # constant strings
 USAGE = "Start GUI by calling main.py\n" \
@@ -14,6 +16,59 @@ USAGE = "Start GUI by calling main.py\n" \
 # constant args
 CMD_VOLATILE = '--volatile'
 CMD_NOGUI = '--nogui'
+
+
+# Gets the work items associated with the specified filter
+# aConnApi : controllerapi object
+# aFilter : filter ID from CLI
+# return : populated list of key IDs
+def _getWorkItemsUsingFilter(aConnApi : controllerapi, aFilter : str) -> list:
+    print("# Get work items from filter's sql property")
+    getFilter = aConnApi.get_filter(aFilter)
+    filterSql = getFilter['jql']
+    isLast = False
+    nextPageToken = ''
+    keys = []
+    while not isLast:
+        search = aConnApi.search_jql(aJql=filterSql, nextPageToken=nextPageToken)
+        if 'isLast' in search: isLast = search['isLast']
+        if 'nextPageToken' in search: nextPageToken = search['nextPageToken']
+        issues = search['issues']
+        for item in issues:
+            key = item['key']
+            keys.append(key)
+        print(len(keys))
+    return keys
+
+
+# Gets work item details from list of key IDs
+# aConnApi : controllerapi object
+# aKeys : list of key IDs
+def _getWorkItemDetails(aConnApi : controllerapi, aKeys : list) -> None:
+    print("Search for specific work items")
+    for key in aKeys:
+        print(f"# {key}")
+        print(f"  - Get issue details")
+        # get issue details
+        issueDetailsJson = aConnApi.get_issue(issueIdOrKey=key, fieldsByKeys=True)
+        print(f"  - Save issue details")
+        # TODO Get issues details: assignee, status, created date, updated date
+
+        # get issue changelogs
+        print(f"  - Get issue changelogs")
+        isLast = False
+        startAt = 0
+        changelogs = []
+        while not isLast:
+            changelogJson = aConnApi.get_changelogs(key)
+            isLast = changelogJson['isLast']
+            startAt = startAt + changelogJson['total']
+            changelogs = changelogs + changelogJson['values']
+            pass # while
+        print(f"  - Save changelogs")
+        # TODO Parse changelogs and track: assignee changes, status changes
+
+        pass # for
 
 
 def main(cmds = None, args = None, opts = None) -> None:
@@ -40,7 +95,7 @@ def main(cmds = None, args = None, opts = None) -> None:
     token = base64.b64encode(f'{email}:{key}'.encode()).decode()
     
     # get API controller
-    controller = controllerapi.ApiController(aToken=token, aRootUrl=rooturl)
+    conapi = controllerapi.ApiController(aToken=token, aRootUrl=rooturl)
 
     # get DB
     now = datetime.now() # current date and time
@@ -52,49 +107,12 @@ def main(cmds = None, args = None, opts = None) -> None:
         print(f"* Local db")
         dataDb = controllerdb.init(date_time + '.db')
 
-    # move this to its own method?
-    print("# Get issues from filter sql property")
-    getFilter = controller.get_filter(reqFilter)
-    filterSql = getFilter['jql']
-    isLast = False
-    nextPageToken = ''
-    keys = []
-    while not isLast:
-        search = controller.search_jql(aJql=filterSql, nextPageToken=nextPageToken)
-        if 'isLast' in search: isLast = search['isLast']
-        if 'nextPageToken' in search: nextPageToken = search['nextPageToken']
-        issues = search['issues']
-        for item in issues:
-            key = item['key']
-            keys.append(key)
-        print(len(keys))
-        pass
+    # get list of work items from filter
+    keys = _getWorkItemsUsingFilter(aConnApi=conapi, aFilter=reqFilter)
     print()
 
-    print("Search for specific issues")
-    for key in keys:
-        print(f"# {key}")
-        print(f"  - Get issue details")
-        # get issue details
-        issueDetailsJson = controller.get_issue(issueIdOrKey=key, fieldsByKeys=True)
-        print(f"  - Save issue details")
-        # TODO Get issues details: assignee, status, created date, updated date
-
-        # get issue changelogs
-        print(f"  - Get issue changelogs")
-        isLast = False
-        startAt = 0
-        changelogs = []
-        while not isLast:
-            changelogJson = controller.get_changelogs(key)
-            isLast = changelogJson['isLast']
-            startAt = startAt + changelogJson['total']
-            changelogs = changelogs + changelogJson['values']
-            pass # while
-        print(f"  - Save changelogs")
-        # TODO Parse changelogs and track: assignee changes, status changes
-
-        pass # for
+    # details from each work item
+    _getWorkItemDetails(aConnApi=conapi, aKeys=keys)
     
     pass # main
 
