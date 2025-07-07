@@ -21,12 +21,12 @@ def main(cmds = None, args = None, opts = None) -> None:
     if '-filter' not in opts:
         raise SystemExit(USAGE)
 
-    reqFilter = args[opts.index('-filter')] if '-filter' in opts else None
+    reqFilter = args[opts.index('-filter')]
 
     # get atlassian env
     email = os.getenv('ATLASSIAN_EMAIL')
     key = os.getenv('ATLASSIAN_KEY')
-    workspaceid = os.getenv('ATLASSIAN_WORKSPACEID')
+    # workspaceid = os.getenv('ATLASSIAN_WORKSPACEID')
     rooturl = os.getenv('ATLASSIAN_ROOTURL')
     token = base64.b64encode(f'{email}:{key}'.encode()).decode()
     
@@ -62,7 +62,7 @@ def main(cmds = None, args = None, opts = None) -> None:
         pass
     print()
 
-    print("Seach for specific issues")
+    print("Search for specific issues")
     for key in keys:
         print(f"# {key}")
         print(f"  - Get issue details")

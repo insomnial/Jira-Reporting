@@ -10,14 +10,12 @@ Python project using an separate API repository to search for Jira/JSM issues an
 ```
 export ATLASSIAN_EMAIL=""
 export ATLASSIAN_KEY=""
-export ATLASSIAN_WORKSPACEID=""
 export ATLASSIAN_ROOTURL=""
 ```
 and
 ```
 unset ATLASSIAN_EMAIL
 unset ATLASSIAN_KEY
-unset ATLASSIAN_WORKSPACEID
 unset ATLASSIAN_ROOTURL
 ```
 
@@ -26,13 +24,11 @@ unset ATLASSIAN_ROOTURL
 $env:ATLASSIAN_EMAIL = ''
 $env:ATLASSIAN_KEY = ''
 $env:ATLASSIAN_ROOTURL = ''
-$env:ATLASSIAN_WORKSPACEID = ''
 ```
 and
 ```
 Remove-Item ENV:\ATLASSIAN_EMAIL
 Remove-Item ENV:\ATLASSIAN_KEY
-Remove-Item ENV:\ATLASSIAN_WORKSPACEID
 Remove-Item ENV:\ATLASSIAN_ROOTURL
 ```
 
