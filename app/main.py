@@ -4,20 +4,25 @@ import controllerdb
 from datetime import datetime
 
 # constant strings
-USAGE = "Start GUI by calling main.py"
-DEFAULT_DB = "jirareporting"
+USAGE = "Start GUI by calling main.py\n" \
+        "  OPT\n" \
+        "    --volatile for memory db, defaults to local db\n" \
+        "  REQ\n" \
+        "    -filter <filter_id>\n"
 
 # constant args
 CMD_VOLATILE = '--volatile'
 
 
 def main(cmds = None, args = None, opts = None) -> None:
-    # if not args:
-    #     raise SystemExit(USAGE)
+    if not args:
+        raise SystemExit(USAGE)
 
-    # if args[0] == "--help":
-    #     raise SystemExit(USAGE)
-    
+    if '-filter' not in opts:
+        raise SystemExit(USAGE)
+
+    reqFilter = args[opts.index('-filter')] if '-filter' in opts else None
+
     # get atlassian env
     email = os.getenv('ATLASSIAN_EMAIL')
     key = os.getenv('ATLASSIAN_KEY')
@@ -36,12 +41,11 @@ def main(cmds = None, args = None, opts = None) -> None:
         dataDb = controllerdb.init()
     else:
         print(f"* Local db")
-
         dataDb = controllerdb.init(date_time + '.db')
 
     # move this to its own method?
     print("# Get issues from filter sql property")
-    getFilter = controller.get_filter(10209)
+    getFilter = controller.get_filter(reqFilter)
     filterSql = getFilter['jql']
     isLast = False
     nextPageToken = ''
