@@ -15,7 +15,6 @@ export ATLASSIAN_ROOTURL=""
 ```
 and
 ```
-
 unset ATLASSIAN_EMAIL
 unset ATLASSIAN_KEY
 unset ATLASSIAN_WORKSPACEID
