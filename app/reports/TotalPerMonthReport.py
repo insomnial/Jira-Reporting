@@ -32,7 +32,9 @@ class TotalPerMonthReport(ReportBase):
                 self.Range[createdSearchString] = tempArr
         
         self.ReportData['Name'] = self.getName()
+        data = {}
         for month in self.Range.keys():
-            self.ReportData[month] = len(self.Range[month])
+            data[month] = len(self.Range[month])
+        self.ReportData['Data'] = data
         return self
     
