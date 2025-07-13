@@ -1,4 +1,11 @@
 --
+-- Table structure for table 'metadata'
+--
+CREATE TABLE `metadata` (
+  `id` int PRIMARY KEY,
+  `open_timestamp` timestamp NOT NULL
+);
+--
 -- Table structure for table `layout`
 --
 CREATE TABLE `layout` (
@@ -22,7 +29,7 @@ CREATE TABLE `status` (
 --
 CREATE TABLE `workitem_changelog` (
   `id` int PRIMARY KEY,
-  `atlassian_keyid` tinytext NOT NULL,
+  `keyid` tinytext NOT NULL,
   `datetime` datetime NOT NULL,
   `event` tinytext NOT NULL
 );
@@ -31,7 +38,7 @@ CREATE TABLE `workitem_changelog` (
 --
 CREATE TABLE `workitem_detail` (
   `id` int PRIMARY KEY,
-  `atlassian_keyid` tinytext NOT NULL,
+  `keyid` tinytext NOT NULL,
   `assignee` tinytext NOT NULL,
   `reporter` tinytext NOT NULL,
   `summary` tinytext NOT NULL,
@@ -40,5 +47,6 @@ CREATE TABLE `workitem_detail` (
   `status` int NOT NULL,
   `created` datetime NOT NULL,
   `issue_type` tinytext NOT NULL,
-  `request_type` tinytext NOT NULL
+  `request_type` tinytext NOT NULL,
+  `details` nvarchar(4000) NOT NULL
 );

@@ -26,11 +26,13 @@ CMD_NOGUI = '--nogui'
 ApiCon = None
 DbCon = None
 Keys = None
+Version = '20250713a'
 
 
 def main(cmds = None, args = None, opts = None) -> None:
     global ApiCon
     global DbCon
+    global Version
 
     if not args:
         raise SystemExit(USAGE)
@@ -64,12 +66,14 @@ def main(cmds = None, args = None, opts = None) -> None:
     # get DB
     now = datetime.now() # current date and time
     date_time = now.strftime("%m%d%Y%H%M%S")
+    dbfilename = f'jira_reporting_{Version}.db'
     if CMD_VOLATILE in cmds:
         print(f"* Memory db")
         DbCon = controllerdb.init()
     else:
         print(f"* Local db")
-        DbCon = controllerdb.init(date_time + '.db')
+        # DbCon = controllerdb.init(date_time + '.db')
+        DbCon = controllerdb.init(dbfilename)
 
     # start populating work items from filter
     WorkItemCon.loadFromFilter(requestFilter)
@@ -100,3 +104,6 @@ if __name__ == "__main__":
         main(cmds, args, opts)
     except KeyboardInterrupt as e:
         print(f"\n\n####\nClosing script.")
+        if DbCon:
+            DbCon.close()
+        sys.exit(0)

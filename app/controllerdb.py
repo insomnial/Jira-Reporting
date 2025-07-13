@@ -40,6 +40,7 @@ def _createFolderDb():
 
 
 def _buildSqlFromTemplate(aConn : sqlite3.Cursor):
+    print(f"> Build database from template")
     # Open the external sql file.
     script_dir = os.path.dirname(__file__)
     file = open(os.path.join(script_dir, 'resources', 'jira_reporting.sql'), 'r')
@@ -48,8 +49,18 @@ def _buildSqlFromTemplate(aConn : sqlite3.Cursor):
     # Close the sql file object.
     file.close()
     # Execute the read out sql script string.
-    aConn.executescript(sql_script_string)
+    cursor = aConn.cursor()
+    cursor.executescript(sql_script_string)
+    aConn.commit()
+    cursor.close()
 
+
+def _updateOpenTimestamp(aConn : sqlite3.Cursor):
+    print(f"> Update open timestamp")
+    cursor = aConn.cursor()
+    cursor.execute("INSERT INTO metadata (id, open_timestamp) VALUES (Null, datetime('now'))")
+    aConn.commit()
+    cursor.close()
 
 def init(aUri = None):
     conn = None
@@ -67,6 +78,17 @@ def init(aUri = None):
 
     assert conn != None
 
-    _buildSqlFromTemplate(conn)
+    print(f"> Check for db structure")
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT open_timestamp FROM `metadata` ORDER BY open_timestamp DESC LIMIT 1")
+        print(f" # PASS {cursor.fetchone()}")
+    except sqlite3.OperationalError:
+        print(f" ! No metadata table found")
+        _buildSqlFromTemplate(conn)
+    finally:
+        cursor.close()
+
+    _updateOpenTimestamp(conn)
 
     return conn
