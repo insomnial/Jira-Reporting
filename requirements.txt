@@ -2,5 +2,8 @@ atlassian_api_py @ git+https://github.com/insomnial/atlassian-api-py.git@f845b88
 certifi==2025.6.15
 charset-normalizer==3.4.2
 idna==3.10
+python-dateutil==2.9.0.post0
 requests==2.32.4
+six==1.17.0
+tqdm==4.67.1
 urllib3==2.5.0
