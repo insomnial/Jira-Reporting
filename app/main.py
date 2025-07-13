@@ -1,14 +1,17 @@
-import sys, os, base64
+import sys
+import os
+import base64
 from datetime import datetime
+
 from atlassian_api_py import controllerapi
+
 import controllerdb
 import controllerwebhook
-import controllerworkitems
-from workitem import WorkItem
-
+from workitems.WorkItemController import WorkItemController
+from reports.TotalPerMonthReport import TotalPerMonthReport
 
 # constant strings
-USAGE = "Start GUI by calling main.py\n" \
+USAGE = "Start by calling main.py OPT REQ\n" \
         "  OPT\n" \
         "    [--volatile] for memory db, defaults to local db\n" \
         "    [--nogui] to run in terminal\n" \
@@ -25,68 +28,6 @@ DbCon = None
 Keys = None
 
 
-# Gets the work items associated with the specified filter
-def _getWorkItemsUsingFilter(aFilter : str) -> None:
-    global ApiCon
-    global Keys
-
-    print("# Get work items from filter's sql property")
-    getFilter = ApiCon.get_filter(aFilter)
-    filterSql = getFilter['jql']
-    isLast = False
-    nextPageToken = ''
-    Keys = []
-    while not isLast:
-        search = ApiCon.search_jql(aJql=filterSql, nextPageToken=nextPageToken, maxResults=1000)
-        if 'isLast' in search: isLast = search['isLast']
-        if 'nextPageToken' in search: nextPageToken = search['nextPageToken']
-        issues = search['issues']
-        for item in issues:
-            key = item['key']
-            Keys.append(key)
-        print(len(Keys))
-
-
-# Gets work item details from list of key IDs
-def _getWorkItemDetailsForKeys() -> None:
-    global ApiCon
-    global Keys
-
-    print("Search for specific work items")
-    for key in Keys:
-        print(f"# {key}")
-        print(f"  - Get issue details")
-        # get issue details
-        issueDetailsJson = ApiCon.get_issue(issueIdOrKey=key, fieldsByKeys=True)
-
-        # filter out empty custom_field
-        popFields = {k:v for k,v in issueDetailsJson['fields'].items() if v}
-        popFields['atlassian_keyid'] = key
-
-        pass
-
-        # TODO Get issues details: assignee, status, created date, updated date
-
-        # get issue changelogs
-        print(f"  - Get issue changelogs")
-        isLast = False
-        startAt = 0
-        changelogs = []
-        while not isLast:
-            changelogJson = ApiCon.get_changelogs(key)
-            isLast = changelogJson['isLast']
-            startAt = startAt + changelogJson['total']
-            changelogs = changelogs + changelogJson['values']
-            pass # while
-
-        print(f"  - Store work item in {DbCon}")
-        workItem = WorkItem(DbCon).saveWorkItem(popFields, issueDetailsJson['names'], changelogs)
-
-        # TODO Parse changelogs and track: assignee changes, status changes
-
-        pass # for
-
-
 def main(cmds = None, args = None, opts = None) -> None:
     global ApiCon
     global DbCon
@@ -94,17 +35,18 @@ def main(cmds = None, args = None, opts = None) -> None:
     if not args:
         raise SystemExit(USAGE)
     
-    if CMD_NOGUI in cmds:
-        print(f"* Running in terminal")
-    else:
-        print(f"* Starting gui")
-        print(f"NOT CURRENTLY SUPPORTED")
-        raise SystemExit(0)
+    # treat all instances as no gui for the moment
+    # if CMD_NOGUI in cmds:
+    #     print(f"* Starting terminal")
+    # else:
+    #     print(f"* Starting gui")
+    #     print(f"NOT CURRENTLY SUPPORTED")
+    #     raise SystemExit(0)
 
     if '-filter' not in opts:
         raise SystemExit(USAGE)
 
-    reqFilter = args[opts.index('-filter')]
+    requestFilter = args[opts.index('-filter')]
 
     # get atlassian env
     email = os.getenv('ATLASSIAN_EMAIL')
@@ -113,8 +55,11 @@ def main(cmds = None, args = None, opts = None) -> None:
     rooturl = os.getenv('ATLASSIAN_ROOTURL')
     token = base64.b64encode(f'{email}:{key}'.encode()).decode()
     
-    # get API controller
+    # instantiate API controller
     ApiCon = controllerapi.ApiController(aToken=token, aRootUrl=rooturl)
+
+    # instantiate WorkItemController
+    WorkItemCon = WorkItemController(ApiCon)
 
     # get DB
     now = datetime.now() # current date and time
@@ -126,12 +71,22 @@ def main(cmds = None, args = None, opts = None) -> None:
         print(f"* Local db")
         DbCon = controllerdb.init(date_time + '.db')
 
+    # start populating work items from filter
+    WorkItemCon.loadFromFilter(requestFilter)
+
+    # start report generation
+    reports = [
+        TotalPerMonthReport(WorkItemList=WorkItemCon.getWorkItems())
+    ]
+    for report in reports:
+        report.generate().save()
+
     # get list of work items from filter
-    keys = _getWorkItemsUsingFilter(aFilter=reqFilter)
-    print()
+    # keys = _getWorkItemsUsingFilter(aFilter=requestFilter)
+    # print()
 
     # details from each work item
-    _getWorkItemDetailsForKeys()
+    # _getWorkItemDetailsForKeys()
 
     pass # main
 
