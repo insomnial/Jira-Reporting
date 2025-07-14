@@ -9,6 +9,8 @@ import controllerdb
 import controllerwebhook
 from workitems.WorkItemController import WorkItemController
 from reports.TotalPerMonthReport import TotalPerMonthReport
+from reports.TimeToFirstResponseAverageReport import TimeToFirstResponseAverageReport
+from reports.TimeToResolutionAverageReport import TimeToResolutionAverageReport
 
 # constant strings
 USAGE = "Start by calling main.py OPT REQ\n" \
@@ -82,7 +84,9 @@ def main(cmds = None, args = None, opts = None) -> None:
 
     # start report generation
     reports = [
-        TotalPerMonthReport(FilterName=WorkItemCon.FilterName, WorkItemList=WorkItemCon.getWorkItems())
+        TotalPerMonthReport(FilterName=WorkItemCon.FilterName, WorkItemList=WorkItemCon.getWorkItems()),
+        TimeToFirstResponseAverageReport(FilterName=WorkItemCon.FilterName, WorkItemList=WorkItemCon.getWorkItems()),
+        TimeToResolutionAverageReport(FilterName=WorkItemCon.FilterName, WorkItemList=WorkItemCon.getWorkItems())
     ]
     for report in reports:
         report.generate().save()
