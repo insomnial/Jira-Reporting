@@ -62,6 +62,11 @@ def _updateOpenTimestamp(aConn : sqlite3.Cursor):
     aConn.commit()
     cursor.close()
 
+
+def _loadFromDb(aConn : sqlite3.Cursor):
+    cursor = aConn.cursor()
+
+
 def init(aUri = None):
     conn = None
     if aUri != None:

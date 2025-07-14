@@ -26,7 +26,7 @@ CMD_NOGUI = '--nogui'
 ApiCon = None
 DbCon = None
 Keys = None
-Version = '20250713a'
+Version = '20250713e'
 
 
 def main(cmds = None, args = None, opts = None) -> None:
@@ -75,24 +75,17 @@ def main(cmds = None, args = None, opts = None) -> None:
         # DbCon = controllerdb.init(date_time + '.db')
         DbCon = controllerdb.init(dbfilename)
 
+    WorkItemCon.setDatabaseConnection(DbCon)
+
     # start populating work items from filter
     WorkItemCon.loadFromFilter(requestFilter)
 
     # start report generation
     reports = [
-        TotalPerMonthReport(WorkItemList=WorkItemCon.getWorkItems())
+        TotalPerMonthReport(FilterName=WorkItemCon.FilterName, WorkItemList=WorkItemCon.getWorkItems())
     ]
     for report in reports:
         report.generate().save()
-
-    # get list of work items from filter
-    # keys = _getWorkItemsUsingFilter(aFilter=requestFilter)
-    # print()
-
-    # details from each work item
-    # _getWorkItemDetailsForKeys()
-
-    pass # main
 
 
 if __name__ == "__main__":

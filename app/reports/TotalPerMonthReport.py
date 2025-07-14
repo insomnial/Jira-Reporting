@@ -6,10 +6,10 @@ from reports.ReportBase import ReportBase
 class TotalPerMonthReport(ReportBase):
 
     def getName(self) -> str:
-        return "Total number of WORK ITEM per month for past 12 months"
+        return "Total per month for previous 12 months"
     
-    def __init__(self, WorkItemList):
-        super().__init__(WorkItems=WorkItemList)
+    def __init__(self, FilterName, WorkItemList):
+        super().__init__(FilterName=FilterName, WorkItems=WorkItemList)
         self.ReportData = {}
         currentMonth = datetime.now()
         self.Range = {}
@@ -31,7 +31,8 @@ class TotalPerMonthReport(ReportBase):
                 tempArr.append(workitem)
                 self.Range[createdSearchString] = tempArr
         
-        self.ReportData['Name'] = self.getName()
+        self.ReportData['Name'] = f"{self.getName()}"
+        self.ReportData['FilterName'] = self.FilterName
         data = {}
         for month in self.Range.keys():
             data[month] = len(self.Range[month])

@@ -3,6 +3,8 @@ class WorkItem:
     def __init__(self, aKeyId : str):
         super().__init__()
         self.key = aKeyId
+        self.fieldMap = {}
+        self.fieldDict = {}
 
 
     ###########################################################################
@@ -18,8 +20,7 @@ class WorkItem:
 
     def set(self, aKey, aValue) -> bool:
         self.fieldDict[aKey] = aValue
-        return True
-        
+        return True            
 
     ###########################################################################
     # Getters
